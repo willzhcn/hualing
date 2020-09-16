@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.*;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -194,8 +195,10 @@ public class OrderWithDistributeCriteria   extends PageableCriteria {
                 predicates.add(cb.equal(storeJoin.get("store").get("id").as(Long.class), storeId));
             }
 
-            query.orderBy(cb.desc(root.get("orderDate").as(Date.class)));
-            query.distinct(true);
+            List list = new ArrayList();
+            list.add(cb.desc(root.get("orderDate").as(Date.class)));
+            list.add(cb.desc(root.get("id").as(Long.class)));
+            query.orderBy(list);
 
             return query.where(predicates.toArray(new Predicate[predicates.size()])).getRestriction();
         };
