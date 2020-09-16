@@ -63,6 +63,10 @@ public class OrderService {
     @Autowired
     private DiscountService discountService;
 
+    @Autowired
+    private ExpressDistributeRepository expressDistributeRepository;
+
+    @Transactional
     public void save(Order order, UserClaim uc){
         order.setLastUpdatedTime(new Date());
         order.setLastUpdatedBy(uc.getId());
@@ -78,9 +82,32 @@ public class OrderService {
             order.setCreateDate(new Date());
             order.setOrderNo(orderNo);
 //            refuseOrderIfNoCommodity(order);
+        } else {
+            if(Constants.ORDER_STATUS_INIT.equals(order.getStatus())){
+                //如果重新提交被拒绝订单，要删除订单的配货，发货信息
+                clearOrder(order);
+            }
         }
 
         this.orderRepository.save(order);
+    }
+
+    private void clearOrder(Order order){
+        if(order.getId() > 0 && order.getOrderNo() != null){
+            //删除发货表
+            OrderExpressCriteria orderExpressCriteria = new OrderExpressCriteria();
+            orderExpressCriteria.setOrderNo(order.getOrderNo());
+            orderExpressService.deleteAll(orderExpressCriteria);
+            //发货配货映射表
+            List<ExpressDistribute> edList = expressDistributeRepository.findByOrderNo(order.getOrderNo());
+            if(edList.size() > 0 && edList.size() < 100){
+                expressDistributeRepository.deleteAll(edList);
+            }
+            //删除配货表
+            OrderDistributeCriteria disCriteria = new OrderDistributeCriteria();
+            disCriteria.setOrderId(order.getId());
+            orderDistributeService.delete(disCriteria);
+        }
     }
 
     public Page<Order> query(OrderCriteria orderCriteria){
@@ -316,7 +343,7 @@ public class OrderService {
             }
             if(backCommodityList.size() > 0)
                 storeCommodityRepository.saveAll(backCommodityList);
-            if(oldDistributes.size() > 0)
+            if(delDistribuites.size() > 0)
                 orderDistributeService.deleteAll(delDistribuites);
         }
 

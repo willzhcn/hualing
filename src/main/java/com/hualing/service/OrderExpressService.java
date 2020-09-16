@@ -149,4 +149,12 @@ public class OrderExpressService {
             }
         }
     }
+
+    public void deleteAll(OrderExpressCriteria criteria){
+        List<OrderExpress> list = orderExpressRepository.findAll(criteria.buildSpecification());
+        if(list.size() > 0 && list.size() < 100){
+            orderExpressRepository.deleteAll(list);
+        }
+    }
+
 }
