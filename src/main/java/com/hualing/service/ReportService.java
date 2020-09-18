@@ -25,7 +25,7 @@ public class ReportService {
     public List getOrderReportData(Date startDate, Date endDate, long brandId, long orgId, Date orderDate, String status){
         String sql = "select o.order_date , g.company_name, s.name as store_name, o.category,o.commodity_no, o.size, o.year, o.quarter , o.discount, o.price,ed.quantity, "
                    + "o.receiver, o.receiver_phone, o.receiver_address, e.name as express_name, "
-                   + "oe.express_no, o.order_no, o.quantity as order_quantity, o.comments, g.dh, g.bh , o.express from t_order o left join t_order_distribute d on o.id = d.order_id "
+                   + "oe.express_no, o.order_no, o.quantity as order_quantity, o.comments, g.dh, g.bh , o.express, o.special_discount from t_order o left join t_order_distribute d on o.id = d.order_id "
                    + "left join t_express_distribute ed on ed.distribute_id = d.id left join t_order_express oe "
                    + "on oe.id = ed.order_express_id left join t_expresses e on oe.express_id = e.id "
                    + "left join t_stores s on d.store_id = s.id left join t_org g on o.org_id = g.id where 1=1 ";
@@ -204,9 +204,9 @@ public class ReportService {
         query.executeUpdate();
     }
 
-    public List getOrderOnlyData(Date startDate, Date endDate, long brandId, long orgId, Date orderDate, String status){
+    public List getOrderOnlyData(Date startDate, Date endDate, long brandId, long orgId, Date orderDate, String status, String backDate){
         String sql = "select o.order_date , o.commodity_no, o.size, o.year, o.quarter , o.discount, o.price, o.quantity, "
-                + "o.receiver, o.receiver_phone, o.receiver_address, o.comments, r.thdh, r.thbh , o.express from t_order o left JOIN t_org r on o.org_id = r.id where 1=1 ";
+                + "o.receiver, o.receiver_phone, o.receiver_address, o.comments, r.thdh, r.thbh , o.express, o.special_discount from t_order o left JOIN t_org r on o.org_id = r.id where 1=1 ";
         if(startDate != null){
             sql += "and o.create_date >= ? ";
         }
@@ -227,6 +227,10 @@ public class ReportService {
 
         if(StringUtils.nonNull(status)){
             sql += "and o.status = ? ";
+        }
+
+        if(StringUtils.nonNull(backDate)){
+            sql += "and (select DATE_FORMAT(max(requested_time), '%Y-%m-%d') from t_order_request where status = 'approved' and order_id = o.id) = ? ";
         }
 
         sql += " order by r.dh ";
@@ -254,6 +258,10 @@ public class ReportService {
 
         if(StringUtils.nonNull(status)){
             query.setParameter(i++, status);
+        }
+
+        if(StringUtils.nonNull(backDate)){
+            query.setParameter(i++, backDate);
         }
         return query.getResultList();
     }

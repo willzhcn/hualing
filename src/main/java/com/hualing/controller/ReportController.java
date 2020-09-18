@@ -116,7 +116,13 @@ public class ReportController {
         if(StringUtils.nonNull(obj)){
             status = obj.toString();
         }
-        List list = reportService.getOrderOnlyData(startDate, endDate, brandId, orgId, orderDate, status);
+        String backDate = null;
+        obj = map.get("backDate");
+        if(StringUtils.nonNull(obj)){
+            backDate = obj.toString();
+        }
+
+        List list = reportService.getOrderOnlyData(startDate, endDate, brandId, orgId, orderDate, status, backDate);
         ar.setData(list);
         return ar;
     }
