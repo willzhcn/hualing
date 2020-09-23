@@ -86,6 +86,9 @@ public class OrderService {
             if(Constants.ORDER_STATUS_INIT.equals(order.getStatus())){
                 //如果重新提交被拒绝订单，要删除订单的配货，发货信息
                 clearOrder(order);
+
+                Order oldOrder = orderRepository.findById(order.getId()).get();
+                order.setCreateDate(oldOrder.getCreateDate());
             }
         }
 
@@ -317,7 +320,9 @@ public class OrderService {
     public void orderConfirm(Order info, UserClaim uc) throws CredentialException {
         Order order = orderRepository.findById(info.getId()).get();
         List<OrderDistribute> distributeList = info.getDistributeList();
-
+        if(!Constants.ORDER_STATUS_INIT.equals(order.getStatus()) && !Constants.ORDER_DISTRIBUTE_REFUSE.equals(order.getStatus()) && !Constants.ORDER_STATUS_CONFIRM.equals(order.getStatus())){
+            throw new CredentialException(20001, "订单状态不是初始，拒绝调货，已确认，不能进行配货！");
+        }
         //删除原有的配货表
         if(!Constants.ORDER_STATUS_INIT.equals(order.getStatus())){
             OrderDistributeCriteria disCriteria = new OrderDistributeCriteria();
