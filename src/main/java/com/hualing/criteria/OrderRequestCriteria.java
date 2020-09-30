@@ -60,7 +60,7 @@ public class OrderRequestCriteria  extends PageableCriteria {
 
             if(StringUtils.nonNull(orderNo)){
                 Join<OrderRequest, com.hualing.domain.Order> orderJoin = root.join(root.getModel().getSingularAttribute("order", Order.class), JoinType.INNER);
-                predicates.add(cb.equal(orderJoin.get("orderNo").as(Long.class), orderNo));
+                predicates.add(cb.like(orderJoin.get("orderNo").as(String.class), "%" + orderNo + "%"));
             }
 
             if(StringUtils.nonNull(orgId)){
@@ -79,6 +79,7 @@ public class OrderRequestCriteria  extends PageableCriteria {
 
             List<javax.persistence.criteria.Order> list = new ArrayList<>();
             list.add(cb.desc(root.get("requestedTime").as(Date.class)));
+            list.add(cb.desc(root.get("id").as(Long.class)));
             query.orderBy(list);
 
             return query.where(predicates.toArray(new Predicate[predicates.size()])).getRestriction();

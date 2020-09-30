@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -122,7 +123,9 @@ public class ReportController {
             backDate = obj.toString();
         }
 
-        List list = reportService.getOrderOnlyData(startDate, endDate, brandId, orgId, orderDate, status, backDate);
+        ArrayList<String> statuses = (ArrayList<String>) map.get("statuses");
+
+        List list = reportService.getOrderOnlyData(startDate, endDate, brandId, orgId, orderDate, status, backDate, statuses);
         ar.setData(list);
         return ar;
     }

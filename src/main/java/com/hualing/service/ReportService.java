@@ -11,6 +11,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TemporalType;
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class ReportService {
     EntityManager em;
 
     public List getOrderReportData(Date startDate, Date endDate, long brandId, long orgId, Date orderDate, String status){
-        String sql = "select o.order_date , g.company_name, s.name as store_name, o.category,o.commodity_no, o.size, o.year, o.quarter , o.discount, o.price,ed.quantity, "
+        String sql = "select o.order_date , g.company_name, s.name as store_name, o.category,o.commodity_no, o.size, o.year, o.quarter , o.discount, o.price,d.quantity, "
                    + "o.receiver, o.receiver_phone, o.receiver_address, e.name as express_name, "
                    + "oe.express_no, o.order_no, o.quantity as order_quantity, o.comments, g.dh, g.bh , o.express, o.special_discount from t_order o left join t_order_distribute d on o.id = d.order_id "
                    + "left join t_express_distribute ed on ed.distribute_id = d.id left join t_order_express oe "
@@ -204,7 +205,7 @@ public class ReportService {
         query.executeUpdate();
     }
 
-    public List getOrderOnlyData(Date startDate, Date endDate, long brandId, long orgId, Date orderDate, String status, String backDate){
+    public List getOrderOnlyData(Date startDate, Date endDate, long brandId, long orgId, Date orderDate, String status, String backDate, ArrayList<String> statuses){
         String sql = "select o.order_date , o.commodity_no, o.size, o.year, o.quarter , o.discount, o.price, o.quantity, "
                 + "o.receiver, o.receiver_phone, o.receiver_address, o.comments, r.thdh, r.thbh , o.express, o.special_discount from t_order o left JOIN t_org r on o.org_id = r.id where 1=1 ";
         if(startDate != null){
@@ -227,6 +228,14 @@ public class ReportService {
 
         if(StringUtils.nonNull(status)){
             sql += "and o.status = ? ";
+        }
+
+        if(statuses != null && statuses.size() > 0){
+            StringBuffer sf = new StringBuffer();
+            for(String s: statuses){
+                sf.append("or o.status = ? ");
+            }
+            sql += " and (" + sf.substring(2) + ") ";
         }
 
         if(StringUtils.nonNull(backDate)){
@@ -258,6 +267,12 @@ public class ReportService {
 
         if(StringUtils.nonNull(status)){
             query.setParameter(i++, status);
+        }
+
+        if(statuses != null && statuses.size() > 0){
+            for(String s: statuses){
+                query.setParameter(i++, s);
+            }
         }
 
         if(StringUtils.nonNull(backDate)){
