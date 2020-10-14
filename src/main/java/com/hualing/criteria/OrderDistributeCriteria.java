@@ -2,11 +2,14 @@ package com.hualing.criteria;
 
 import com.hualing.common.PageableCriteria;
 import com.hualing.domain.Order;
+import com.hualing.domain.Org;
 import com.hualing.domain.Store;
 import com.hualing.util.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.*;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -74,14 +77,12 @@ public class OrderDistributeCriteria  extends PageableCriteria {
     public <OrderDistribute> Specification<OrderDistribute> buildSpecification() {
         return (Root<OrderDistribute> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new LinkedList<>();
-
+            Join<OrderDistribute, Order> orderJoin = root.join(root.getModel().getSingularAttribute("order", Order.class), JoinType.INNER);
             if(StringUtils.nonNull(orderId)){
-                Join<OrderDistribute, Order> orderJoin = root.join(root.getModel().getSingularAttribute("order", Order.class), JoinType.INNER);
                 predicates.add(cb.equal(orderJoin.get("id").as(Long.class), orderId));
             }
 
             if(StringUtils.nonNull(orderNo)){
-                Join<OrderDistribute, Order> orderJoin = root.join(root.getModel().getSingularAttribute("order", Order.class), JoinType.INNER);
                 predicates.add(cb.like(orderJoin.get("orderNo").as(String.class), "%" + orderNo + "%"));
             }
 
@@ -100,11 +101,15 @@ public class OrderDistributeCriteria  extends PageableCriteria {
             }
 
             if(StringUtils.nonNull(date)){
-                Join<OrderDistribute, Order> orderJoin = root.join(root.getModel().getSingularAttribute("order", Order.class), JoinType.INNER);
+
                 predicates.add(cb.greaterThanOrEqualTo(orderJoin.get("orderDate").as(String.class), date));
                 predicates.add(cb.lessThanOrEqualTo(orderJoin.get("orderDate").as(String.class), date + " 23:59:59"));
             }
 
+            List list = new ArrayList();
+            list.add(cb.asc(orderJoin.get("org").as(Org.class)));
+            list.add(cb.desc(root.get("id").as(Long.class)));
+            query.orderBy(list);
             return query.where(predicates.toArray(new Predicate[predicates.size()])).getRestriction();
         };
     }
