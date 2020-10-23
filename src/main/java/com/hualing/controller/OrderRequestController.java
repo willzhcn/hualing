@@ -41,4 +41,19 @@ public class OrderRequestController {
 
         return ar;
     }
+
+    @GetMapping("approveAll")
+    public ActionResult approveAll(@RequestAttribute(Constants.CURRENT_USER_CLAIM) UserClaim uc){
+        ActionResult ar = new ActionResult();
+        try {
+            orderRequestService.approveAll(uc);
+            ar.setSuccess(true);
+        } catch (CredentialException e) {
+            e.printStackTrace();
+            ar.setSuccess(false);
+            ar.setMessage(e.getMessage());
+        }
+
+        return ar;
+    }
 }

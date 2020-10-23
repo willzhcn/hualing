@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -35,9 +36,18 @@ public class OrderExpressService {
     public void saveList(List<OrderExpress> list, UserClaim uc){
         Date date = new Date();
         HashMap<Long, OrderDistribute> orderDistributeMap = new HashMap<Long, OrderDistribute>();
+
+        SimpleDateFormat sf = new SimpleDateFormat("yyyyMMdd");
+        String today = sf.format(new Date());
+        String maxOrderNo = orderExpressRepository.getMaxOrderNo(today + "%");
+        if(maxOrderNo == null){
+            maxOrderNo = today + "00000";
+        }
+        Long orderNo = Long.valueOf(maxOrderNo);
         for(OrderExpress orderExpress: list){
             orderExpress.setLastUpdatedTime(date);
             orderExpress.setLastUpdatedBy(uc.getId());
+            orderExpress.setOrderNo((++ orderNo) + "");
             if(uc.getRole() == Constants.ROLE_STORE_SUPERVISOR){
                 orderExpress.setStoreId(uc.getStoreId());
             }
@@ -68,6 +78,7 @@ public class OrderExpressService {
             expressDistributeRepository.saveAll(orderExpress.getDistributeList());
         }
     }
+
 
     public void saveAll(List<OrderExpress> list, UserClaim uc){
         if(list.size() > 0){

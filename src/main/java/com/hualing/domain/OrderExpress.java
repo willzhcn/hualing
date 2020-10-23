@@ -30,6 +30,8 @@ public class OrderExpress {
 
     private long storeId;
 
+    private String orderNo;
+
     @Column(name = "last_updated_time")
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastUpdatedTime;
@@ -127,5 +129,13 @@ public class OrderExpress {
 
     public void setExpress(Express express) {
         this.express = express;
+    }
+
+    public String getOrderNo() {
+        return orderNo;
+    }
+
+    public void setOrderNo(String orderNo) {
+        this.orderNo = orderNo;
     }
 }

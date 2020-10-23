@@ -67,7 +67,7 @@ public class OrderService {
     private ExpressDistributeRepository expressDistributeRepository;
 
     @Transactional
-    public void save(Order order, UserClaim uc){
+    public void save(Order order, UserClaim uc) throws CredentialException{
         order.setLastUpdatedTime(new Date());
         order.setLastUpdatedBy(uc.getId());
         Brand brand = brandService.getOnly();
@@ -81,6 +81,9 @@ public class OrderService {
             String orderNo = shortName + sf.format(new Date()) + formatSerial(serial);
             order.setCreateDate(new Date());
             order.setOrderNo(orderNo);
+            int storeCount = storeCommodityService.count(order.getCommodityNo(), order.getSize(), order.getYear(), order.getQuarter());
+            if(order.getQuantity() > storeCount)
+                throw new CredentialException(50001, "库存不足，总库存： " + storeCount);
 //            refuseOrderIfNoCommodity(order);
         } else {
             if(Constants.ORDER_STATUS_INIT.equals(order.getStatus())){
@@ -142,79 +145,93 @@ public class OrderService {
         Brand brand = brandService.getOnly();
         String shortName = org.getShortName() == null? "": org.getShortName();
         int i = 2;
+        StringBuffer errMsg = new StringBuffer();
         for(Order order: list){
             if(!StringUtils.nonNull(order.getCommodityNo())){
-                throw new CredentialException(50001, i + "行数据错误，货号为空");
+                errMsg.append(i).append("行数据错误，货号为空").append("<br>");
             }
             if(!StringUtils.nonNull(order.getSize())){
-                throw new CredentialException(50001, i + "行数据错误，尺码为空");
+                errMsg.append(i).append("行数据错误，尺码为空").append("<br>");
             }
             if(!StringUtils.nonNull(order.getOrderDate())){
-                throw new CredentialException(50001, i + "行数据错误，订单日期为空");
+                errMsg.append(i).append("行数据错误，订单日期为空").append("<br>");
             } else {
                 if(!sf2.format(new Date()).equals(sf2.format(order.getOrderDate()))){
-                    throw new CredentialException(50001, i + "行数据错误，订单日期不是当前日期");
+                    errMsg.append(i).append("行数据错误，订单日期不是当前日期").append("<br>");
                 }
             }
             if(!StringUtils.nonNull(order.getYear())){
-                throw new CredentialException(50001, i + "行数据错误，年份为空");
+                errMsg.append(i).append("行数据错误，年份为空").append("<br>");
             }
             int currentYear = Calendar.getInstance().get(Calendar.YEAR);
             if(!(order.getYear() <= currentYear && order.getYear() >= currentYear - 10 )){
-                throw new CredentialException(50001, i + "行数据错误，年份错误");
+                errMsg.append(i).append("行数据错误，年份错误").append("<br>");
             }
             if(!("Q1".equals(order.getQuarter()) || "Q2".equals(order.getQuarter()) || "Q3".equals(order.getQuarter()) || "Q4".equals(order.getQuarter()))){
-                throw new CredentialException(50001, i + "行数据错误，季节必须是Q1, Q2, Q3或Q4");
+                errMsg.append(i).append("行数据错误，季节必须是Q1, Q2, Q3或Q4").append("<br>");
             }
             if(!StringUtils.nonNull(order.getDiscount())){
-                throw new CredentialException(50001, i + "行数据错误，折扣为空");
+                errMsg.append(i).append("行数据错误，折扣为空").append("<br>");
             }
             if(!StringUtils.nonNull(order.getPrice())){
-                throw new CredentialException(50001, i + "行数据错误，零售价为空");
+                errMsg.append(i).append("行数据错误，零售价为空").append("<br>");
             }
             if(!StringUtils.nonNull(order.getQuantity())){
-                throw new CredentialException(50001, i + "行数据错误，数量为空");
+                errMsg.append(i).append("行数据错误，数量为空").append("<br>");
             }
             if(!StringUtils.nonNull(order.getReceiver())){
-                throw new CredentialException(50001, i + "行数据错误，收货人为空");
+                errMsg.append(i).append("行数据错误，收货人为空").append("<br>");
             }
             if(!StringUtils.nonNull(order.getReceiverPhone())){
-                throw new CredentialException(50001, i + "行数据错误，联系电话为空");
+                errMsg.append(i).append("行数据错误，联系电话为空").append("<br>");
             }
 
             if(!StringUtils.checkPhoneNumber(order.getReceiverPhone())){
-                throw new CredentialException(50001, i + "行数据错误，联系电话不是电话号码");
+                errMsg.append(i).append("行数据错误，联系电话不是电话号码").append("<br>");
             }
 
             if(!StringUtils.nonNull(order.getReceiverAddress())){
-                throw new CredentialException(50001, i + "行数据错误，收货地址为空");
+                errMsg.append(i).append("行数据错误，收货地址为空").append("<br>");
             }
             if(!StringUtils.nonNull(order.getExpress())){
-                throw new CredentialException(50001, i + "行数据错误，快递为空");
+                errMsg.append(i).append("行数据错误，快递为空").append("<br>");
             }
+            boolean storeExist = false;
             if(order.getId() == 0){
                 String orderNo = shortName + sf.format(new Date()) + formatSerial(serial);
                 order.setOrderNo(orderNo);
                 order.setBrand(brand);
                 order.setCreateDate(new Date());
 //                refuseOrderIfNoCommodity(order);
-                if(!checkExistStore(order)){
-                    throw new CredentialException(50001, i + "行数据错误，库存中没有该商品：" + order.getCommodityNo() + " " + order.getSize());
+                storeExist = checkExistStore(order);
+                if(order.getCommodityNo()!= null && order.getSize() != null && !storeExist){
+                    errMsg.append(i).append("行数据错误，库存中没有该商品: ").append(order.getCommodityNo()).append(" ").append(order.getSize()).append("<br>");
+                }
+                if(StringUtils.nonNull(order.getCommodityNo()) && StringUtils.nonNull(order.getSize()) && StringUtils.nonNull(order.getYear()) && StringUtils.nonNull(order.getQuarter()) && storeExist){
+                    if(!checkPrice(order))
+                        errMsg.append(i).append("行数据错误，订单中商品零售价不正确").append("<br>");
+                    //查询库存
+                    int storeCount = storeCommodityService.count(order.getCommodityNo(), order.getSize(), order.getYear(), order.getQuarter());
+                    if(storeCount < order.getQuantity()){
+                        errMsg.append(i).append("行数据错误，库存不足，总库存： ").append(storeCount);
+                    }
                 }
             }
-            if(!checkPrice(order))
-                throw new CredentialException(50001, i + "行数据错误，订单中商品零售价不正确");
+
             //match a discount
-            String orderDateStr = sf2.format(order.getOrderDate());
-            try {
-                Discount discount = discountService.matchDiscount(order.getOrg().getId(), orderDateStr, order.getYear(), order.getQuarter());
-                if(discount == null)
-                    throw new CredentialException(50001, i + "行数据错误，无法匹配折扣, 机构：" + order.getOrg().getCompanyName() + " 日期: " + orderDateStr);
-                else order.setDiscount(discount.getDiscount());
-            } catch (ParseException e) {
-                e.printStackTrace();
-                throw new CredentialException(50001, i + "行数据错误，无法匹配折扣, 机构：" + order.getOrg().getCompanyName() + " 日期: " + orderDateStr);
+            if(StringUtils.nonNull(order.getOrderDate()) && StringUtils.nonNull(order.getYear()) && StringUtils.nonNull(order.getQuarter())){
+                String orderDateStr = sf2.format(order.getOrderDate());
+                try {
+                    Discount discount = discountService.matchDiscount(order.getOrg().getId(), orderDateStr, order.getYear(), order.getQuarter());
+                    if(discount == null)
+                        errMsg.append(i).append("行数据错误，无法匹配折扣").append("<br>");
+                    else order.setDiscount(discount.getDiscount());
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                    errMsg.append(i).append("行数据错误，无法匹配折扣").append(orderDateStr).append("<br>");
+                }
             }
+
             order.setLastUpdatedTime(new Date());
             order.setLastUpdatedBy(uc.getId());
             if(Objects.isNull(order.getStatus()))
@@ -222,7 +239,12 @@ public class OrderService {
             serial ++;
             i++;
         }
-        this.orderRepository.saveAll(list);
+
+        if(errMsg.length() > 0){
+            throw new CredentialException(50001, errMsg.toString());
+        } else {
+            this.orderRepository.saveAll(list);
+        }
     }
 
     @Transactional
@@ -235,6 +257,7 @@ public class OrderService {
             example.setReceiver(info.getReceiver());
             example.setReceiverPhone(info.getReceiverPhone());
             example.setCommodityNo(info.getCommodityNo());
+            example.setReceiverAddress(info.getReceiverAddress());
             example.setSizeNo(info.getSize());
             Optional<Order> opt = orderRepository.findOne(example.buildSpecification());
 

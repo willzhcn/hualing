@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Will on 12/08/2019.
@@ -61,5 +62,24 @@ public class OrderRequestService {
         orderService.approveOrderRequest(order, orderRequest.getQuantity(), uc);
         orderRequestRepository.save(orderRequest);
 
+    }
+
+    @Transactional
+    public void approveAll(UserClaim uc){
+        List<OrderRequest> list = orderRequestRepository.findAllByStatus(Constants.REQUEST_STATUS_REQUESTED);
+        if(list != null && list.size() > 0) {
+            for (OrderRequest req : list) {
+                User user = new User();
+                user.setId(uc.getId());
+                req.setApprovedBy(user);
+                req.setApprovedTime(new Date());
+                req.setStatus(Constants.REQUEST_STATUS_APPROVED);
+                Order order = req.getOrder();
+                orderService.approveOrderRequest(order, req.getQuantity(), uc);
+                orderRequestRepository.save(req);
+            }
+        } else {
+            throw new CredentialException(50001, "没有退货请求！");
+        }
     }
 }

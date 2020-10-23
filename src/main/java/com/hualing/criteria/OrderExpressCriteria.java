@@ -8,6 +8,8 @@ import com.hualing.util.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.*;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -159,6 +161,11 @@ public class OrderExpressCriteria extends PageableCriteria {
             }
 
             query.distinct(true);
+
+            List list = new ArrayList();
+            list.add(cb.asc(root.get("orderNo").as(String.class)));
+            list.add(cb.asc(root.get("id").as(Long.class)));
+            query.orderBy(list);
 
             return query.where(predicates.toArray(new Predicate[predicates.size()])).getRestriction();
         };

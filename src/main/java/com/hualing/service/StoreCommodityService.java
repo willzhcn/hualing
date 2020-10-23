@@ -70,4 +70,19 @@ public class StoreCommodityService {
         long count = this.storeCommodityRepository.count(storeCommodityCriteria.buildSpecification());
         return count > 0;
     }
+
+    public int count(String commodityNo, String size, int year, String quarter){
+        StoreCommodityCriteria storeCommodityCriteria = new StoreCommodityCriteria();
+        storeCommodityCriteria.setActive(true);
+        storeCommodityCriteria.setCommodityNo(commodityNo);
+        storeCommodityCriteria.setSizeNo(size);
+        storeCommodityCriteria.setYear(year);
+        storeCommodityCriteria.setQuarter(quarter);
+        List<StoreCommodity> list = storeCommodityRepository.findAll(storeCommodityCriteria.buildSpecification());
+        int count = 0;
+        for(StoreCommodity s: list){
+            count += s.getQuantity();
+        }
+        return count;
+    }
 }

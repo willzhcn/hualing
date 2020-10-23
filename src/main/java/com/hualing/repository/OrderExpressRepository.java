@@ -19,4 +19,7 @@ public interface OrderExpressRepository  extends JpaRepository<OrderExpress, Lon
 
     @Query(value = "select d.status from t_order o inner join t_order_distribute d on o.id = d.order_id where o.id = ?1", nativeQuery = true)
     List<Object[]> getAllOrderDistributeStatus(Long orderId);
+
+    @Query(value = "select max(order_no) from t_order_express where order_no like ?1", nativeQuery = true)
+    String getMaxOrderNo(String today);
 }

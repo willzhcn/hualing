@@ -25,8 +25,14 @@ public class OrderController {
     @PostMapping("/save")
     public ActionResult saveOrder(@RequestBody Order order, @RequestAttribute(Constants.CURRENT_USER_CLAIM) UserClaim uc){
         ActionResult ar = new ActionResult();
-        this.orderService.save(order, uc);
-        ar.setSuccess(true);
+        try {
+            this.orderService.save(order, uc);
+            ar.setSuccess(true);
+        } catch (CredentialException e) {
+            e.printStackTrace();
+            ar.setSuccess(false);
+            ar.setMessage(e.getMessage());
+        }
         return ar;
     }
 

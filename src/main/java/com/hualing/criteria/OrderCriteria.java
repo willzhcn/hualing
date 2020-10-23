@@ -23,6 +23,7 @@ public class OrderCriteria  extends PageableCriteria {
     private String sizeNo;
     private String receiver;
     private String receiverPhone;
+    private String receiverAddress;
     private String status;
     private String[] statuses;
     private Date orderDate;
@@ -116,6 +117,14 @@ public class OrderCriteria  extends PageableCriteria {
         this.brandId = brandId;
     }
 
+    public String getReceiverAddress() {
+        return receiverAddress;
+    }
+
+    public void setReceiverAddress(String receiverAddress) {
+        this.receiverAddress = receiverAddress;
+    }
+
     @Override
     public <Order> Specification<Order> buildSpecification() {
         return (Root<Order> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
@@ -145,6 +154,10 @@ public class OrderCriteria  extends PageableCriteria {
 
             if(StringUtils.nonNull(receiverPhone)){
                 predicates.add(cb.like(root.get("receiverPhone").as(String.class), "%" + receiverPhone + "%"));
+            }
+
+            if(StringUtils.nonNull(receiverAddress)){
+                predicates.add(cb.like(root.get("receiverAddress").as(String.class), receiverAddress ));
             }
 
             if(StringUtils.nonNull(commodityNo)){
