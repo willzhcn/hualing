@@ -23,7 +23,7 @@ public class ReportService {
     @Autowired
     EntityManager em;
 
-    public List getOrderReportData(Date startDate, Date endDate, long brandId, long orgId, Date orderDate, String status){
+    public List getOrderReportData(Date startDate, Date endDate, long brandId, long orgId, Date orderDate, String status, ArrayList<String> statuses){
         String sql = "select o.order_date , g.company_name, s.name as store_name, o.category,o.commodity_no, o.size, o.year, o.quarter , o.discount, o.price,d.quantity, "
                    + "o.receiver, o.receiver_phone, o.receiver_address, e.name as express_name, "
                    + "oe.express_no, o.order_no, o.quantity as order_quantity, o.comments, g.dh, g.bh , o.express, o.special_discount from t_order o left join t_order_distribute d on o.id = d.order_id "
@@ -52,6 +52,14 @@ public class ReportService {
             sql += "and o.status = ? ";
         }
 
+        if(statuses != null && statuses.size() > 0){
+            StringBuffer sf = new StringBuffer();
+            for(String s: statuses){
+                sf.append("or o.status = ? ");
+            }
+            sql += " and (" + sf.substring(2) + ") ";
+        }
+
         sql += " order by g.company_name, o.order_date desc ";
 
         int i = 1;
@@ -78,6 +86,12 @@ public class ReportService {
 
         if(StringUtils.nonNull(status)){
             query.setParameter(i++, status);
+        }
+
+        if(statuses != null && statuses.size() > 0){
+            for(String s: statuses){
+                query.setParameter(i++, s);
+            }
         }
         return query.getResultList();
     }

@@ -61,7 +61,12 @@ public class ReportController {
         if(StringUtils.nonNull(obj)){
             status = obj.toString();
         }
-        List list = reportService.getOrderReportData(startDate, endDate, brandId, orgId, orderDate, status);
+        obj = map.get("statuses");
+        ArrayList<String> statuses = null;
+        if(StringUtils.nonNull(obj)){
+            statuses = (ArrayList<String>) obj;
+        }
+        List list = reportService.getOrderReportData(startDate, endDate, brandId, orgId, orderDate, status, statuses);
         ar.setData(list);
         return ar;
     }
