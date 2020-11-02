@@ -221,7 +221,7 @@ public class ReportService {
 
     public List getOrderOnlyData(Date startDate, Date endDate, long brandId, long orgId, Date orderDate, String status, String backDate, ArrayList<String> statuses){
         String sql = "select o.order_date , o.commodity_no, o.size, o.year, o.quarter , o.discount, o.price, o.quantity, "
-                + "o.receiver, o.receiver_phone, o.receiver_address, o.comments, r.thdh, r.thbh , o.express, o.special_discount, r.company_name from t_order o left JOIN t_org r on o.org_id = r.id where 1=1 ";
+                + "o.receiver, o.receiver_phone, o.receiver_address, o.comments, r.thdh, r.thbh , o.express, o.special_discount, r.company_name, (select DATE_FORMAT(max(requested_time), '%Y-%m-%d') from t_order_request where  order_id = o.id) as back_request_time, o.back_count  from t_order o left JOIN t_org r on o.org_id = r.id where 1=1 ";
         if(startDate != null){
             sql += "and o.create_date >= ? ";
         }

@@ -32,6 +32,9 @@ public class OrderExpressService {
     @Autowired
     private OrderService orderService;
 
+    @Autowired
+    private ExpressService expressService;
+
     @Transactional
     public void saveList(List<OrderExpress> list, UserClaim uc){
         Date date = new Date();
@@ -47,9 +50,13 @@ public class OrderExpressService {
         for(OrderExpress orderExpress: list){
             orderExpress.setLastUpdatedTime(date);
             orderExpress.setLastUpdatedBy(uc.getId());
-            orderExpress.setOrderNo((++ orderNo) + "");
             if(uc.getRole() == Constants.ROLE_STORE_SUPERVISOR){
                 orderExpress.setStoreId(uc.getStoreId());
+            }
+            //韵达非直发店铺才发设置订单编号
+            Express express = expressService.getExpress(orderExpress.getExpress().getId());
+            if(express.getName().indexOf("韵达") >= 0 && uc.getRole() != Constants.ROLE_STORE_SUPERVISOR){
+                orderExpress.setOrderNo((++ orderNo) + "");
             }
             OrderExpress result = orderExpressRepository.save(orderExpress);
             for(ExpressDistribute expressDistribute: orderExpress.getDistributeList()){

@@ -8,6 +8,7 @@ import com.hualing.util.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.*;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -107,8 +108,8 @@ public class OrderDistributeCriteria  extends PageableCriteria {
             }
 
             List list = new ArrayList();
-            list.add(cb.asc(orderJoin.get("org").as(Org.class)));
-            list.add(cb.desc(root.get("id").as(Long.class)));
+//            list.add(cb.asc(orderJoin.get("org").as(Org.class)));
+            list.add(cb.asc(root.get("lastUpdatedTime").as(Timestamp.class)));
             query.orderBy(list);
             return query.where(predicates.toArray(new Predicate[predicates.size()])).getRestriction();
         };

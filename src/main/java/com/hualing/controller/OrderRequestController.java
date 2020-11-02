@@ -10,6 +10,10 @@ import com.hualing.service.OrderRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 /**
  * Created by Will on 12/08/2019.
  */
@@ -42,11 +46,15 @@ public class OrderRequestController {
         return ar;
     }
 
-    @GetMapping("approveAll")
-    public ActionResult approveAll(@RequestAttribute(Constants.CURRENT_USER_CLAIM) UserClaim uc){
+    @PostMapping("approveAll")
+    public ActionResult approveAll(@RequestBody Map map, @RequestAttribute(Constants.CURRENT_USER_CLAIM) UserClaim uc){
         ActionResult ar = new ActionResult();
         try {
-            orderRequestService.approveAll(uc);
+            ArrayList<Integer> ids = (ArrayList<Integer>) map.get("ids");
+            ArrayList<Long> longList = new ArrayList();
+            for(Integer i : ids)
+                longList.add(i.longValue());
+            orderRequestService.approveAll(longList, uc);
             ar.setSuccess(true);
         } catch (CredentialException e) {
             e.printStackTrace();

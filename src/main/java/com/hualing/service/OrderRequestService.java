@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -53,6 +54,8 @@ public class OrderRequestService {
     @Transactional
     public void approve(OrderRequest info, UserClaim uc) throws CredentialException {
         OrderRequest orderRequest = orderRequestRepository.findById(info.getId()).get();
+        if(!Constants.REQUEST_STATUS_REQUESTED.equals(orderRequest.getStatus()))
+            return;
         orderRequest.setStatus(Constants.REQUEST_STATUS_APPROVED);
         User user = new User();
         user.setId(uc.getId());
@@ -65,10 +68,12 @@ public class OrderRequestService {
     }
 
     @Transactional
-    public void approveAll(UserClaim uc){
-        List<OrderRequest> list = orderRequestRepository.findAllByStatus(Constants.REQUEST_STATUS_REQUESTED);
+    public void approveAll(ArrayList<Long> ids,  UserClaim uc){
+        List<OrderRequest> list = orderRequestRepository.findAllById(ids);
         if(list != null && list.size() > 0) {
             for (OrderRequest req : list) {
+                if(!Constants.REQUEST_STATUS_REQUESTED.equals(req.getStatus()))
+                    continue;
                 User user = new User();
                 user.setId(uc.getId());
                 req.setApprovedBy(user);
