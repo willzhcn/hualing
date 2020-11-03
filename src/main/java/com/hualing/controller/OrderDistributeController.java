@@ -10,7 +10,9 @@ import com.hualing.service.OrderDistributeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Will on 02/08/2019.
@@ -61,10 +63,14 @@ public class OrderDistributeController {
     }
 
     @PostMapping("/deliverAll")
-    public ActionResult deliverAll(@RequestBody OrderDistributeCriteria criteria, @RequestAttribute(Constants.CURRENT_USER_CLAIM) UserClaim uc){
+    public ActionResult deliverAll(@RequestBody Map map, @RequestAttribute(Constants.CURRENT_USER_CLAIM) UserClaim uc){
         ActionResult ar = new ActionResult();
         try {
-            orderDistributeService.deliverAll(criteria, uc);
+            ArrayList<Integer> ids = (ArrayList<Integer>) map.get("ids");
+            ArrayList<Long> longList = new ArrayList();
+            for(Integer i : ids)
+                longList.add(i.longValue());
+            orderDistributeService.deliverAll(longList, uc);
             ar.setSuccess(true);
         } catch (CredentialException e) {
             ar.setMessage(e.getMessage());
@@ -83,6 +89,24 @@ public class OrderDistributeController {
             ar.setMessage(e.getMessage());
             ar.setSuccess(false);
         }
+        return ar;
+    }
+
+    @PostMapping("sumQuantity")
+    public ActionResult sumQuantity(@RequestBody OrderDistributeCriteria criteria){
+        ActionResult ar = new ActionResult();
+        ar.setSuccess(true);
+        ar.setData(orderDistributeService.sumQuantity(criteria));
+        return ar;
+    }
+
+    @PostMapping("sameQuantifyInfo")
+    public ActionResult sumQuantity(@RequestBody Map map){
+        ActionResult ar = new ActionResult();
+        ar.setSuccess(true);
+        List<Map> list = (List<Map>) map.get("list");
+        List<String> statuses = (List<String>) map.get("statuses");
+        ar.setData(orderDistributeService.getSameQuantifyInfo(list, statuses));
         return ar;
     }
 }
