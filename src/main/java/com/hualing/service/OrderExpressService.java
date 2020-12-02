@@ -68,6 +68,9 @@ public class OrderExpressService {
                 OrderDistribute orderDistribute = orderDistributeMap.get(orderDistributeId);
                 if(orderDistribute == null){
                     orderDistribute = orderDistributeService.get(orderDistributeId);
+                    //检查订单状态
+                    if(Constants.ORDER_STATUS_REFUSE.equals(orderDistribute.getStatus()))
+                        throw new CredentialException(50001, orderDistribute.getOrder().getOrderNo() + "--" + orderDistribute.getStore().getName() + " 状态改变，订单已被取消！");
                     orderDistributeMap.put(orderDistributeId, orderDistribute);
                 }
                 expressDistribute.setOrderNo(orderDistribute.getOrder().getOrderNo());

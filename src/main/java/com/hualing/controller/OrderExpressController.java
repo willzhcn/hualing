@@ -30,7 +30,7 @@ public class OrderExpressController {
         } catch (Exception e){
             e.printStackTrace();
             ar.setSuccess(false);
-            ar.setMessage("保存信息失败！");
+            ar.setMessage("保存信息失败！" + e.getMessage());
         }
 
         return ar;

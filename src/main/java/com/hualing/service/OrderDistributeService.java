@@ -156,7 +156,9 @@ public class OrderDistributeService {
         }
 
         List<BigDecimal> result = query.getResultList();
-        return result.get(0).longValue();
+        if(result == null || result.get(0) == null)
+            return (long)0;
+        else return result.get(0).longValue();
     }
 
     public List<Map> getSameQuantifyInfo(List<Map> receivers, List<String> statuses){
@@ -164,8 +166,10 @@ public class OrderDistributeService {
         for(int i = 0; i < receivers.size(); i++){
             if(i != 0)
                 sql += "or ";
+            else sql += "( ";
             sql += "(receiver=? and receiver_phone=? and receiver_address=?) ";
         }
+        sql += ") ";
 
         if(statuses != null && statuses.size() > 0){
             for(int i = 0; i < statuses.size(); i++){
