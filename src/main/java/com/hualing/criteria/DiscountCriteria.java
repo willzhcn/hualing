@@ -23,6 +23,7 @@ public class DiscountCriteria  extends PageableCriteria {
     private long partBId;
     private Long brandId;
     private Boolean isDeleted;
+    private String commodityNo;
 
     @Override
     public <Discount> Specification<Discount> buildSpecification() {
@@ -39,6 +40,10 @@ public class DiscountCriteria  extends PageableCriteria {
 
             if(StringUtils.nonNull(quarter)){
                 predicates.add(cb.equal(root.get("quarter").as(String.class), quarter));
+            }
+
+            if(StringUtils.nonNull(commodityNo)){
+                predicates.add(cb.equal(root.get("commodityNo").as(String.class), commodityNo));
             }
 
             if(StringUtils.nonNull(partAId)){
@@ -133,5 +138,13 @@ public class DiscountCriteria  extends PageableCriteria {
 
     public void setPartAId(Long partAId) {
         this.partAId = partAId;
+    }
+
+    public String getCommodityNo() {
+        return commodityNo;
+    }
+
+    public void setCommodityNo(String commodityNo) {
+        this.commodityNo = commodityNo;
     }
 }

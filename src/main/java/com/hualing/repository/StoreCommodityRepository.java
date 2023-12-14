@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  * Created by Will on 19/07/2019.
  */
 public interface StoreCommodityRepository extends JpaRepository<StoreCommodity, Long>, JpaSpecificationExecutor {
+    int countAllByCommodityNo(String commodityNo);
 }

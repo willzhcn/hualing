@@ -81,6 +81,20 @@ public class OrderService {
             String orderNo = shortName + sf.format(new Date()) + formatSerial(serial);
             order.setCreateDate(new Date());
             order.setOrderNo(orderNo);
+            SimpleDateFormat sf2 = new SimpleDateFormat("yyyy-MM-dd");
+            //match a discount
+            if(StringUtils.nonNull(order.getOrderDate()) && StringUtils.nonNull(order.getYear()) && StringUtils.nonNull(order.getQuarter())){
+                String orderDateStr = sf2.format(order.getOrderDate());
+                try {
+                    Discount discount = discountService.matchDiscount(order.getOrg().getId(), orderDateStr, order.getYear(), order.getQuarter(), order.getCommodityNo());
+                    if(discount == null)
+                        throw new CredentialException(50002, "无法匹配折扣!");
+                    else order.setDiscount(discount.getDiscount());
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                    throw new CredentialException(50002, "无法匹配折扣!");
+                }
+            }
             int storeCount = storeCommodityService.count(order.getCommodityNo(), order.getSize(), order.getYear(), order.getQuarter());
             if(order.getQuantity() > storeCount)
                 throw new CredentialException(50001, "库存不足，总库存： " + storeCount);
@@ -222,7 +236,7 @@ public class OrderService {
             if(StringUtils.nonNull(order.getOrderDate()) && StringUtils.nonNull(order.getYear()) && StringUtils.nonNull(order.getQuarter())){
                 String orderDateStr = sf2.format(order.getOrderDate());
                 try {
-                    Discount discount = discountService.matchDiscount(order.getOrg().getId(), orderDateStr, order.getYear(), order.getQuarter());
+                    Discount discount = discountService.matchDiscount(order.getOrg().getId(), orderDateStr, order.getYear(), order.getQuarter(), order.getCommodityNo());
                     if(discount == null)
                         errMsg.append(i).append("行数据错误，无法匹配折扣").append("<br>");
                     else order.setDiscount(discount.getDiscount());

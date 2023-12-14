@@ -31,6 +31,9 @@ public class Discount {
     private String quarter;
 
     @Column
+    private String commodityNo;
+
+    @Column
     private Double discount;
 
     @Column
@@ -155,5 +158,13 @@ public class Discount {
 
     public void setEndDate(Date endDate) {
         this.endDate = endDate;
+    }
+
+    public String getCommodityNo() {
+        return commodityNo;
+    }
+
+    public void setCommodityNo(String commodityNo) {
+        this.commodityNo = commodityNo;
     }
 }

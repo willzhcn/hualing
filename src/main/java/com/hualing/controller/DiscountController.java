@@ -40,17 +40,23 @@ public class DiscountController {
     @PostMapping("/save")
     public ActionResult saveOrg(@RequestBody Discount discount, @RequestAttribute(Constants.CURRENT_USER_CLAIM) UserClaim uc){
         ActionResult ar = new ActionResult();
-        this.discountService.save(discount, uc);
-        ar.setSuccess(true);
+        try {
+            this.discountService.save(discount, uc);
+            ar.setSuccess(true);
+        } catch (Exception e){
+            ar.setSuccess(false);
+            ar.setMessage(e.getMessage());
+        }
+
         return ar;
     }
 
     @GetMapping("/match")
-    public ActionResult matchDiscount(@RequestParam long orgId, @RequestParam String orderDate, @RequestParam int year, @RequestParam String quarter){
+    public ActionResult matchDiscount(@RequestParam long orgId, @RequestParam String orderDate, @RequestParam int year, @RequestParam String quarter, @RequestParam String commodityNo){
         ActionResult ar = new ActionResult();
         Discount discount = null;
         try {
-            discount = this.discountService.matchDiscount(orgId, orderDate, year, quarter);
+            discount = this.discountService.matchDiscount(orgId, orderDate, year, quarter, commodityNo);
         } catch (ParseException e) {
             e.printStackTrace();
         }
