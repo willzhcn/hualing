@@ -239,7 +239,11 @@ public class OrderService {
                     Discount discount = discountService.matchDiscount(order.getOrg().getId(), orderDateStr, order.getYear(), order.getQuarter(), order.getCommodityNo());
                     if(discount == null)
                         errMsg.append(i).append("行数据错误，无法匹配折扣").append("<br>");
-                    else order.setDiscount(discount.getDiscount());
+                    else {
+                        if(order.getDiscount().doubleValue() != discount.getDiscount().doubleValue())
+                            errMsg.append(i).append("行数据错误，折扣错误，该商品折扣应为：" + discount.getDiscount()).append("<br>");
+                        order.setDiscount(discount.getDiscount());
+                    }
                 } catch (ParseException e) {
                     e.printStackTrace();
                     errMsg.append(i).append("行数据错误，无法匹配折扣").append(orderDateStr).append("<br>");
