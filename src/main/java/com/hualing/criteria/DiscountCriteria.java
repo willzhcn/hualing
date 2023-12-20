@@ -70,7 +70,7 @@ public class DiscountCriteria  extends PageableCriteria {
                 Join<Discount, Brand> brandJoin = root.join(root.getModel().getSingularAttribute("brand", Brand.class), JoinType.INNER);
                 predicates.add(cb.equal(brandJoin.get("id").as(Long.class), brandId));
             }
-
+            query.orderBy(cb.asc(root.get("isDeleted").as(Boolean.class)));
             return query.where(predicates.toArray(new Predicate[predicates.size()])).getRestriction();
         };
     }

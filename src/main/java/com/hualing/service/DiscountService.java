@@ -5,17 +5,25 @@ import com.hualing.common.CredentialException;
 import com.hualing.common.UserClaim;
 import com.hualing.criteria.DiscountCriteria;
 import com.hualing.criteria.OrgCriteria;
+import com.hualing.domain.Brand;
 import com.hualing.domain.Discount;
+import com.hualing.domain.DiscountImportItem;
 import com.hualing.domain.Org;
+import com.hualing.repository.BrandRepository;
 import com.hualing.repository.DiscountRepository;
+import com.hualing.repository.OrgRepository;
 import com.hualing.repository.StoreCommodityRepository;
 import com.hualing.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -32,6 +40,14 @@ public class DiscountService {
 
     @Autowired
     private StoreCommodityRepository storeCommodityRepository;
+
+    @Autowired
+    private OrgRepository orgRepository;
+    @Autowired
+    private BrandRepository brandRepository;
+
+    @Autowired
+    EntityManager em;
 
     public void save(Discount discount, UserClaim uc){
         if(StringUtils.nonNull(discount.getCommodityNo()) && storeCommodityRepository.countAllByCommodityNo(discount.getCommodityNo()) == 0)
@@ -104,5 +120,98 @@ public class DiscountService {
             }
         }
         return discount;
+    }
+
+    public List<Discount> export(){
+        return discountRepository.findAllByIsDeletedOrderByPartBAsc(false);
+    }
+
+    @Transactional
+    public void importExcel(List<DiscountImportItem> list, UserClaim uc){
+        StringBuffer errMsg = new StringBuffer();
+        int i = 2;
+        Date lastUptTime = new Date();
+        List<Discount> result = new ArrayList<>();
+        for(DiscountImportItem item: list){
+            Discount discount = new Discount();
+            if(!StringUtils.nonNull(item.getPartAName()) || "全部".equals(item.getPartAName()))
+                errMsg.append(i).append("行数据错误，甲方名称不能为空或‘全部’!").append("<br>");
+            else {
+                Org partA = orgRepository.findByCompanyName(item.getPartAName());
+                if(partA != null){
+                    discount.setPartA(partA);
+                } else
+                    errMsg.append(i).append("行数据错误，甲方名称不正确!").append("<br>");
+            }
+
+            if(!StringUtils.nonNull(item.getPartBName()))
+                errMsg.append(i).append("行数据错误，乙方名称不能为空!").append("<br>");
+            else if( "全部".equals(item.getPartBName()))
+                discount.setPartB(null);
+            else {
+                Org partB = orgRepository.findByCompanyName(item.getPartBName());
+                if(partB != null){
+                    discount.setPartB(partB);
+                } else
+                    errMsg.append(i).append("行数据错误，乙方名称不正确!").append("<br>");
+            }
+
+            if(!StringUtils.nonNull(item.getBrandName()))
+                errMsg.append(i).append("行数据错误，品牌名称不能为空!").append("<br>");
+            else {
+                Brand brand = brandRepository.findByName(item.getBrandName());
+                if(brand != null)
+                    discount.setBrand(brand);
+                else
+                    errMsg.append(i).append("行数据错误，品牌名称不正确!").append("<br>");
+            }
+
+            if(item.getYear() != null && item.getYear().intValue() != 0){
+                discount.setYear(item.getYear());
+            } else
+                errMsg.append(i).append("行数据错误，年份不正确!").append("<br>");
+
+            if("Q1".equals(item.getQuarter()) || ("Q2").equals(item.getQuarter()) || ("Q3").equals(item.getQuarter()) || ("Q4").equals(item.getQuarter()))
+                discount.setQuarter(item.getQuarter());
+            else
+                errMsg.append(i).append("行数据错误，季节不正确!").append("<br>");
+
+            if(StringUtils.nonNull(item.getCommodityNo())) {
+                if(storeCommodityRepository.countAllByCommodityNo(item.getCommodityNo()) == 0)
+                    errMsg.append(i).append("行数据错误，货号不存在!").append("<br>");
+                else
+                    discount.setCommodityNo(item.getCommodityNo());
+            }
+
+            if(item.getStartDate() != null)
+                discount.setStartDate(item.getStartDate());
+            else
+                errMsg.append(i).append("行数据错误，起始日期不能为空!").append("<br>");
+            if(item.getEndDate() != null)
+                discount.setEndDate(item.getEndDate());
+            else
+                errMsg.append(i).append("行数据错误，结束日期不能为空!").append("<br>");
+            if(item.getDiscount() != null)
+                discount.setDiscount(item.getDiscount());
+            else
+                errMsg.append(i).append("行数据错误，折扣不能为空!").append("<br>");
+            discount.setRemarks(item.getRemarks());
+            discount.setLastUpdatedBy(uc.getId());
+            discount.setLastUpdatedTime(lastUptTime);
+            result.add(discount);
+            i++;
+        }
+
+        if(errMsg.length() > 0){
+            throw new CredentialException(50001, errMsg.toString());
+        } else {
+            //将原来的折扣都设置为失效
+            String sql = "update t_discount set is_deleted = true, last_updated_by = ?, last_updated_time = ?";
+            Query query =  em.createNativeQuery(sql);
+            query.setParameter(1, uc.getId());
+            query.setParameter(2, lastUptTime);
+            query.executeUpdate();
+            discountRepository.saveAll(result);
+        }
     }
 }

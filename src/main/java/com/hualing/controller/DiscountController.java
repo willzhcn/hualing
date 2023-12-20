@@ -5,12 +5,13 @@ import com.hualing.common.Constants;
 import com.hualing.common.UserClaim;
 import com.hualing.criteria.DiscountCriteria;
 import com.hualing.domain.Discount;
+import com.hualing.domain.DiscountImportItem;
 import com.hualing.service.DiscountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
-import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Will on 22/07/2019.
@@ -66,6 +67,27 @@ public class DiscountController {
         } else {
             ar.setSuccess(false);
             ar.setMessage("无法匹配折扣！");
+        }
+        return ar;
+    }
+
+    @GetMapping("/export")
+    public ActionResult export(){
+        ActionResult ar = new ActionResult();
+        ar.setSuccess(true);
+        ar.setData(discountService.export());
+        return ar;
+    }
+
+    @PostMapping("/import")
+    public ActionResult importExcel(@RequestBody List<DiscountImportItem> list, @RequestAttribute(Constants.CURRENT_USER_CLAIM) UserClaim uc){
+        ActionResult ar = new ActionResult();
+        try {
+            discountService.importExcel(list, uc);
+            ar.setSuccess(true);
+        } catch (Exception e){
+            ar.setSuccess(false);
+            ar.setMessage(e.getMessage());
         }
         return ar;
     }
