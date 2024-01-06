@@ -43,6 +43,9 @@ public class StoreCommodityV {
     @Column
     private int quantity;
 
+    @Transient
+    private Double discount;
+
     public String getId() {
         return id;
     }
@@ -129,5 +132,13 @@ public class StoreCommodityV {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    public Double getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(Double discount) {
+        this.discount = discount;
     }
 }

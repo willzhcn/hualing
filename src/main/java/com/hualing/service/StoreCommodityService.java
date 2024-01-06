@@ -3,8 +3,10 @@ package com.hualing.service;
 import com.hualing.common.UserClaim;
 import com.hualing.criteria.StoreCommodityCriteria;
 import com.hualing.criteria.StoreCommodityVCriteria;
+import com.hualing.domain.Discount;
 import com.hualing.domain.StoreCommodity;
 import com.hualing.domain.StoreCommodityV;
+import com.hualing.repository.DiscountRepository;
 import com.hualing.repository.StoreCommodityRepository;
 import com.hualing.repository.StoreCommodityVRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,11 @@ public class StoreCommodityService {
     @Autowired
     private StoreCommodityVRepository storeCommodityVRepository;
 
+    @Autowired
+    private DiscountRepository discountRepository;
+    @Autowired
+    private DiscountService discountService;
+
     public Page<StoreCommodity> query(StoreCommodityCriteria storeCommodityCriteria){
         return this.storeCommodityRepository.findAll(storeCommodityCriteria.buildSpecification(), storeCommodityCriteria.buildPageRequest());
     }
@@ -33,8 +40,16 @@ public class StoreCommodityService {
         return this.storeCommodityVRepository.findAll(criteria.buildSpecification(), criteria.buildPageRequest());
     }
 
-    public List<StoreCommodityV> agentQueryAll(StoreCommodityVCriteria criteria){
-        return this.storeCommodityVRepository.findAll(criteria.buildSpecification());
+    public List<StoreCommodityV> agentQueryAll(StoreCommodityVCriteria criteria, UserClaim uc){
+        List<StoreCommodityV> list = this.storeCommodityVRepository.findAll(criteria.buildSpecification());
+        List<Discount> discountList = discountRepository.findAllByIsDeletedOrderByPartBAsc(false);
+        //添加折扣信息
+        for(StoreCommodityV commodity: list){
+            Discount discount = discountService.matchDiscount(uc.getOrgId(), commodity.getYear(), commodity.getQuarter(), commodity.getCommodityNo(), discountList);
+            if(discount != null)
+                commodity.setDiscount(discount.getDiscount());
+        }
+        return list;
     }
 
     public StoreCommodity matchOne(StoreCommodityCriteria criteria){

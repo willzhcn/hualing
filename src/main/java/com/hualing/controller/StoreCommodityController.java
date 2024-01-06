@@ -36,9 +36,9 @@ public class StoreCommodityController {
     }
 
     @PostMapping("/agentQueryAll")
-    public ActionResult agentQueryAll(@RequestBody StoreCommodityVCriteria criteria){
+    public ActionResult agentQueryAll(@RequestBody StoreCommodityVCriteria criteria, @RequestAttribute(Constants.CURRENT_USER_CLAIM) UserClaim uc){
         ActionResult ar = new ActionResult();
-        ar.setData(this.storeCommodityService.agentQueryAll(criteria));
+        ar.setData(this.storeCommodityService.agentQueryAll(criteria, uc));
         ar.setSuccess(true);
         return ar;
     }

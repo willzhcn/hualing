@@ -122,6 +122,46 @@ public class DiscountService {
         return discount;
     }
 
+    public Discount matchDiscount(long orgId, int year, String quarter, String commodityNo, List<Discount> discountList){
+        Discount discount = null;
+        Date orderDate = new Date();
+
+        //先根据货号查询折扣
+        if(StringUtils.nonNull(commodityNo)){
+            for(Discount dis: discountList){
+                if((dis.getPartB() != null && dis.getPartB().getId() == orgId) && commodityNo.equals(dis.getCommodityNo()) && year == dis.getYear().intValue() && quarter.equals(dis.getQuarter())
+                        && (dis.getStartDate() == null || dis.getStartDate().getTime() <= orderDate.getTime()) && ((dis.getEndDate() == null || dis.getEndDate().getTime() >= orderDate.getTime())))
+                    return dis;
+            }
+            //如果没有匹配折扣，去除机构条件进行匹配
+            for(Discount dis: discountList){
+                if(dis.getPartB() == null && commodityNo.equals(dis.getCommodityNo()) && year == dis.getYear().intValue() && quarter.equals(dis.getQuarter())
+                        && (dis.getStartDate() == null || dis.getStartDate().getTime() <= orderDate.getTime()) && ((dis.getEndDate() == null || dis.getEndDate().getTime() >= orderDate.getTime())))
+                    return dis;
+
+            }
+        }
+
+        //如果根据货号无法匹配，则去除货号条件进行匹配
+        for(Discount dis: discountList){
+            if((dis.getPartB() != null && dis.getPartB().getId() == orgId) && dis.getCommodityNo() == null && year == dis.getYear().intValue() && quarter.equals(dis.getQuarter())
+                    && (dis.getStartDate() == null || dis.getStartDate().getTime() <= orderDate.getTime()) && ((dis.getEndDate() == null || dis.getEndDate().getTime() >= orderDate.getTime())))
+                discount = dis;
+        }
+
+        if(discount == null){
+            for(Discount dis: discountList){
+                if((dis.getCommodityNo() == null) && dis.getPartB() == null && year == dis.getYear().intValue() && quarter.equals(dis.getQuarter())
+                        && (dis.getStartDate() == null || dis.getStartDate().getTime() <= orderDate.getTime()) && ((dis.getEndDate() == null || dis.getEndDate().getTime() >= orderDate.getTime())) && dis.getPartB() == null) {
+                    discount = dis;
+                    break;
+                }
+            }
+        }
+
+        return discount;
+    }
+
     public List<Discount> export(){
         return discountRepository.findAllByIsDeletedOrderByPartBAsc(false);
     }
